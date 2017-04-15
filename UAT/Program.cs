@@ -30,33 +30,58 @@ namespace UAT
                 //System.Configuration.ConfigurationManager.AppSettings["PATH_FOLDER4"].ToString(),
             };
 
-            FindMatching(sourceFoldersPath);
-            
+            // for each robot code, generate the specific files
+            foreach (var codeItem in CodeRobotItems)
+            {
+                List<string> filesThatContainThisCode = new List<string>();
+
+                // get the chosen files
+                filesThatContainThisCode = FindMatching(sourceFoldersPath, codeItem);
+
+                // sort the list of file by the creation time
+                filesThatContainThisCode.Sort(
+                    (path1, path2) => (File.GetCreationTime(path1) - File.GetCreationTime(path2)).Seconds
+                    );
+
+                // new file name
+                var generatedFileName = $"{codeItem.CodeRobot}_{codeItem.NumSapClient}_.EDI";
+
+                // copy the first file to the destination folder
+                if (filesThatContainThisCode != null && filesThatContainThisCode.Count > 0)
+                    File.Copy(filesThatContainThisCode.FirstOrDefault(), $"{DestinationFolderPath}/{generatedFileName}");
+            }
+
             Console.ReadKey();
         }
 
-        private static void FindMatching(List<string> sourceFoldersPath)
+        private static List<string> FindMatching(List<string> sourceFoldersPath, CodeRobotItem codeItem)
         {
             if (sourceFoldersPath == null)
-                return;
+                return null;
 
             var index = 1;
 
-            foreach(var folderPath in sourceFoldersPath)
+            List<string> filesThatContainThisCode = new List<string>();
+
+            foreach (var folderPath in sourceFoldersPath)
             {
                 Console.WriteLine($"Checking folder [{index}; Path={folderPath}]...");
                 var filesPaths = Directory.GetFiles(folderPath).ToList();
-                FindMatchingForSpecificFolder(filesPaths);
+                filesThatContainThisCode.AddRange(FindMatchingForSpecificFolder(filesPaths, codeItem));
                 index++;
             }
+
+            return filesThatContainThisCode;
         }
 
-        private static void FindMatchingForSpecificFolder(List<string> filesPaths)
+        private static List<string> FindMatchingForSpecificFolder(List<string> filesPaths, CodeRobotItem codeItem)
         {
             if (filesPaths == null)
-                return;
+                return null;
 
             var index = 1;
+
+            List<string> filesThatContainThisCode = new List<string>();
 
             foreach (var filePath in filesPaths)
             {
@@ -64,20 +89,14 @@ namespace UAT
                 Console.Write($"Checking file [{index}] ==> ");
 
                 // check if this file contain any robot_code
-                var codeRobot = FileContainsRobotCode(filePath);
-
-                if (codeRobot != null)
+                if (FileContainsRobotCode(filePath, codeItem))
                 {
                     // console log
                     Console.ForegroundColor = ConsoleColor.Green;
                     Console.WriteLine($"[YES] File path:{filePath}");
                     Console.ResetColor();
 
-                    // generate new file name
-                    var copiedFilename = $"{codeRobot.CodeRobot}_{codeRobot.NumSapClient}_{Path.GetFileName(filePath)}";
-
-                    // copy the file from the source folder to the destination one
-                    File.Copy(filePath, $"{DestinationFolderPath}/{copiedFilename}");
+                    filesThatContainThisCode.Add(filePath);
                 }
                 else
                 {
@@ -88,19 +107,18 @@ namespace UAT
                 }
                 index++;
             }
+
+            return filesThatContainThisCode;
         }
 
-        private static CodeRobotItem FileContainsRobotCode(string filePath)
+        private static bool FileContainsRobotCode(string filePath, CodeRobotItem codeItem)
         {
-            foreach(var robotCode in CodeRobotItems)
-            {
-                var code = $"EDI+{robotCode.CodeRobot}:EDI";
-                var fileContent = File.ReadAllText(filePath);
-                if (fileContent.Contains(code))
-                    return robotCode;
-            }
+            var code = $"EDI+{codeItem.CodeRobot}:EDI";
+            var fileContent = File.ReadAllText(filePath);
+            if (fileContent.Contains(code))
+                return true;
 
-            return null;
+            return false;
         }
 
         #region Excel Helpers
