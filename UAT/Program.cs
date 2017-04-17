@@ -48,6 +48,7 @@ namespace UAT
                 // get the chosen files
                 filesThatContainThisCode = FindMatching(sourceFoldersPath, codeItem);
 
+                // console log
                 Console.WriteLine($"{filesThatContainThisCode.Count} file(s) contain this code {codeItem.CodeRobot}");
 
                 // sort the list of file by the creation time
@@ -68,14 +69,34 @@ namespace UAT
                         File.Delete($"{DestinationFolderPath}/{generatedFileName}");
 
                     File.Copy(filesThatContainThisCode.FirstOrDefault(), $"{DestinationFolderPath}/{generatedFileName}");
+
+                    // log to file
+                    codeItem.Log.Add($"[SOURCE]={filesThatContainThisCode.FirstOrDefault()};[DESTINATION]={generatedFileName}");
+                }
+                else
+                {
+                    // log to file
+                    codeItem.Log.Add($"[SOURCE]=NULL;[DESTINATION]=NULL");
                 }
             }
 
-            Console.ForegroundColor = ConsoleColor.Yellow;
-            Console.WriteLine("SUMMARY:");
-            foreach (var str in summary)
-                Console.WriteLine(str);
-            Console.ResetColor();
+            // check if the output file does exit
+            if(!File.Exists($"{DestinationFolderPath}/output.csv"))
+                File.Create($"{DestinationFolderPath}/output.csv").Close();
+
+            // create the output file
+            WriteRobotCodesToCSV(CodeRobotItems, $"{DestinationFolderPath}/output.csv");
+
+
+            // display summary
+            if(summary.Count > 0)
+            {
+                Console.ForegroundColor = ConsoleColor.Yellow;
+                Console.WriteLine("SUMMARY:");
+                foreach (var str in summary)
+                    Console.WriteLine(str);
+                Console.ResetColor();
+            }
 
             Console.ReadKey();
         }
@@ -206,6 +227,30 @@ namespace UAT
             }
 
             return codes;
+        }
+        static void WriteRobotCodesToCSV(List<CodeRobotItem> codes, string filePath)
+        {
+
+            using (var fileStream = File.OpenWrite(filePath))
+            {
+                using (var writer = new StreamWriter(fileStream))
+                {
+                    writer.WriteLine("code_robot; num_sap_client; canal; log");
+
+                    foreach(var code in codes)
+                    {
+                        var log = string.Join(":::", code.Log.ToArray());
+
+                        var line = $"{code.CodeRobot};{code.NumSapClient};{code.Canal};{log}";
+
+                        writer.WriteLine(line);
+                    }
+
+                    writer.Close();
+                }
+
+                fileStream.Close();
+            }
         }
         #endregion
     }
