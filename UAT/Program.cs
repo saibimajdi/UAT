@@ -14,7 +14,7 @@ namespace UAT
         public static readonly string codeRobotFilePath = System.Configuration.ConfigurationManager.AppSettings["CODEROBOT_FILEPATH"].ToString();
 
         // get Robot Codes from .xlsx file
-        public static List<CodeRobotItem> CodeRobotItems = GetRobotCodes(codeRobotFilePath);
+        public static List<CodeRobotItem> CodeRobotItems = GetRobotCodesFromCSV(codeRobotFilePath);
 
         // get destination folder path from APP SETTING
         public static string DestinationFolderPath = System.Configuration.ConfigurationManager.AppSettings["PATHDEST"].ToString();
@@ -30,17 +30,29 @@ namespace UAT
                 //System.Configuration.ConfigurationManager.AppSettings["PATH_FOLDER4"].ToString(),
             };
 
+            // remove the first item that contains the columns name
+            CodeRobotItems.RemoveAt(0);
+
+            // summary container
+            List<string> summary = new List<string>();
+
             // for each robot code, generate the specific files
             foreach (var codeItem in CodeRobotItems)
             {
+                Console.ForegroundColor = ConsoleColor.Blue;
+                Console.WriteLine($"Searching for files that contains the code: {codeItem.CodeRobot}...");
+                Console.ResetColor();
+
                 List<string> filesThatContainThisCode = new List<string>();
 
                 // get the chosen files
                 filesThatContainThisCode = FindMatching(sourceFoldersPath, codeItem);
 
+                Console.WriteLine($"{filesThatContainThisCode.Count} file(s) contain this code {codeItem.CodeRobot}");
+
                 // sort the list of file by the creation time
                 filesThatContainThisCode.Sort(
-                    (path1, path2) => (File.GetCreationTime(path1) - File.GetCreationTime(path2)).Seconds
+                    (path1, path2) => (File.GetCreationTime(path2) - File.GetCreationTime(path1)).Seconds
                     );
 
                 // new file name
@@ -48,8 +60,22 @@ namespace UAT
 
                 // copy the first file to the destination folder
                 if (filesThatContainThisCode != null && filesThatContainThisCode.Count > 0)
+                {
+                    summary.Add($"{filesThatContainThisCode.Count} contains the {codeItem.CodeRobot}!");
+                    
+                    // delete the file if exist
+                    if (File.Exists($"{DestinationFolderPath}/{generatedFileName}"))
+                        File.Delete($"{DestinationFolderPath}/{generatedFileName}");
+
                     File.Copy(filesThatContainThisCode.FirstOrDefault(), $"{DestinationFolderPath}/{generatedFileName}");
+                }
             }
+
+            Console.ForegroundColor = ConsoleColor.Yellow;
+            Console.WriteLine("SUMMARY:");
+            foreach (var str in summary)
+                Console.WriteLine(str);
+            Console.ResetColor();
 
             Console.ReadKey();
         }
@@ -86,7 +112,7 @@ namespace UAT
             foreach (var filePath in filesPaths)
             {
                 // console log
-                Console.Write($"Checking file [{index}] ==> ");
+                //Console.Write($"Checking file [{index}] ==> ");
 
                 // check if this file contain any robot_code
                 if (FileContainsRobotCode(filePath, codeItem))
@@ -98,13 +124,13 @@ namespace UAT
 
                     filesThatContainThisCode.Add(filePath);
                 }
-                else
-                {
-                    // console log
-                    Console.ForegroundColor = ConsoleColor.Red;
-                    Console.WriteLine("[NO]");
-                    Console.ResetColor();
-                }
+                //else
+                //{
+                //    // console log
+                //    Console.ForegroundColor = ConsoleColor.Red;
+                //    Console.WriteLine("[NO]");
+                //    Console.ResetColor();
+                //}
                 index++;
             }
 
@@ -122,7 +148,7 @@ namespace UAT
         }
 
         #region Excel Helpers
-        static List<CodeRobotItem> GetRobotCodes(string filePath)
+        static List<CodeRobotItem> GetRobotCodesFromXlsx(string filePath)
         {
             Console.WriteLine("Reading data from RobotCodes (.xlsx) file...");
 
@@ -158,6 +184,26 @@ namespace UAT
             System.Runtime.InteropServices.Marshal.ReleaseComObject(xlApp);
 
             Console.WriteLine("Reading data from RobotCodes (.xlsx) file... [Completed]");
+
+            return codes;
+        }
+        static List<CodeRobotItem> GetRobotCodesFromCSV(string filePath)
+        {
+            List<CodeRobotItem> codes = new List<CodeRobotItem>();
+
+            using (var fileStream = File.OpenRead(filePath))
+            {
+                using (var streamReader = new StreamReader(fileStream))
+                {
+                    while(!streamReader.EndOfStream)
+                    {
+                        var line = streamReader.ReadLine();
+                        var values = line.Split(';');
+
+                        codes.Add(new CodeRobotItem(values[0], values[1], values[2]));
+                    }
+                }
+            }
 
             return codes;
         }
