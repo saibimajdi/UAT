@@ -71,7 +71,7 @@ namespace UAT
                     File.Copy(filesThatContainThisCode.FirstOrDefault(), $"{DestinationFolderPath}/{generatedFileName}");
 
                     // log to file
-                    codeItem.Log.Add($"[SOURCE]={filesThatContainThisCode.FirstOrDefault()};[DESTINATION]={generatedFileName}");
+                    codeItem.Log.Add($"[SOURCE]={filesThatContainThisCode.FirstOrDefault()};[DESTINATION]={DestinationFolderPath}/{generatedFileName}");
                 }
                 else
                 {
