@@ -130,6 +130,8 @@ namespace UAT
             }
         }
 
+        // closing issue #1
+
         private static List<string> FindMatching(List<string> sourceFoldersPath, CodeRobotItem codeItem)
         {
             if (sourceFoldersPath == null)
