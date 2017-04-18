@@ -119,7 +119,7 @@ namespace UAT
                     // saving old BGMs
                     oldBGM.Add(lines[index]);
 
-                    lines[index] = lines[index].Replace("BGM+220+", "BGM+220+UAT_");
+                    lines[index] = lines[index].Replace("BGM+220+", "BGM+220+UAT_"); 
                 }
             }
 
