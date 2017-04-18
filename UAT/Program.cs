@@ -112,30 +112,20 @@ namespace UAT
 
             for (int index = 0; index < lines.Length; ++index)
             {
-                var startIndex = lines[index].IndexOf("BGM+220+");
-                var endIndex = lines[index].IndexOf("+9'");
-
-                if(startIndex != -1 && endIndex != -1 && startIndex < endIndex)
-                {
-                    // get the part to be changed
-                    var str = lines[index].Substring(startIndex + "BGM+220+".Length, endIndex - (startIndex + "BGM+220+".Length));
-                    var newLine = $"BGM+220+UAT_{str}+9'";
-
-                    lines[index] = newLine;
-                }
+                if(lines[index].StartsWith("BGM+220+"))
+                    lines[index] = lines[index].Replace("BGM+220+", "BGM+220+UAT_");
             }
 
             // write lines on the file
-            
-                using (var writer = new StreamWriter(path, false)) // false to replace the file content (not append)
+            using (var writer = new StreamWriter(path, false)) // false to replace the file content (not append)
+            {
+                for (int index = 0; index < lines.Length; ++index)
                 {
-                    for(int index = 0; index < lines.Length; ++index)
-                    {
-                        writer.WriteLine(lines[index]);
-                    }
-
-                    writer.Close();
+                    writer.WriteLine(lines[index]);
                 }
+
+                writer.Close();
+            }
         }
 
         private static List<string> FindMatching(List<string> sourceFoldersPath, CodeRobotItem codeItem)
