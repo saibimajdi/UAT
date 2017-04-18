@@ -24,10 +24,10 @@ namespace UAT
             // get source folders path from APP SETTING file
             var sourceFoldersPath = new List<string>()
             {
-                System.Configuration.ConfigurationManager.AppSettings["PATH_FOLDER1"].ToString()
-                //System.Configuration.ConfigurationManager.AppSettings["PATH_FOLDER2"].ToString(),
-                //System.Configuration.ConfigurationManager.AppSettings["PATH_FOLDER3"].ToString(),
-                //System.Configuration.ConfigurationManager.AppSettings["PATH_FOLDER4"].ToString(),
+                System.Configuration.ConfigurationManager.AppSettings["PATH_FOLDER1"].ToString(),
+                System.Configuration.ConfigurationManager.AppSettings["PATH_FOLDER2"].ToString(),
+                System.Configuration.ConfigurationManager.AppSettings["PATH_FOLDER3"].ToString(),
+                System.Configuration.ConfigurationManager.AppSettings["PATH_FOLDER4"].ToString(),
             };
 
             // remove the first item that contains the columns name
@@ -62,13 +62,15 @@ namespace UAT
                 // copy the first file to the destination folder
                 if (filesThatContainThisCode != null && filesThatContainThisCode.Count > 0)
                 {
-                    summary.Add($"{filesThatContainThisCode.Count} contains the {codeItem.CodeRobot}!");
+                    summary.Add($"{filesThatContainThisCode.Count} file(s) contains the {codeItem.CodeRobot}!");
                     
                     // delete the file if exist
                     if (File.Exists($"{DestinationFolderPath}/{generatedFileName}"))
                         File.Delete($"{DestinationFolderPath}/{generatedFileName}");
 
                     File.Copy(filesThatContainThisCode.FirstOrDefault(), $"{DestinationFolderPath}/{generatedFileName}");
+
+                    EditFileBGM($"{DestinationFolderPath}/{generatedFileName}");
 
                     // log to file
                     codeItem.Log.Add($"[SOURCE]={filesThatContainThisCode.FirstOrDefault()};[DESTINATION]={DestinationFolderPath}/{generatedFileName}");
@@ -101,6 +103,41 @@ namespace UAT
             Console.ReadKey();
         }
 
+        private static void EditFileBGM(string path)
+        {
+            if (string.IsNullOrWhiteSpace(path) || string.IsNullOrEmpty(path))
+                return;
+
+            string[] lines = File.ReadAllLines(path);
+
+            for (int index = 0; index < lines.Length; ++index)
+            {
+                var startIndex = lines[index].IndexOf("BGM+220+");
+                var endIndex = lines[index].IndexOf("+9'");
+
+                if(startIndex != -1 && endIndex != -1 && startIndex < endIndex)
+                {
+                    // get the part to be changed
+                    var str = lines[index].Substring(startIndex + "BGM+220+".Length, endIndex - (startIndex + "BGM+220+".Length));
+                    var newLine = $"BGM+220+UAT_{str}+9'";
+
+                    lines[index] = newLine;
+                }
+            }
+
+            // write lines on the file
+            
+                using (var writer = new StreamWriter(path, false)) // false to replace the file content (not append)
+                {
+                    for(int index = 0; index < lines.Length; ++index)
+                    {
+                        writer.WriteLine(lines[index]);
+                    }
+
+                    writer.Close();
+                }
+        }
+
         private static List<string> FindMatching(List<string> sourceFoldersPath, CodeRobotItem codeItem)
         {
             if (sourceFoldersPath == null)
@@ -112,9 +149,18 @@ namespace UAT
 
             foreach (var folderPath in sourceFoldersPath)
             {
+                // invalid folder path
+                if (string.IsNullOrEmpty(folderPath) || string.IsNullOrWhiteSpace(folderPath))
+                    return filesThatContainThisCode;
+
                 Console.WriteLine($"Checking folder [{index}; Path={folderPath}]...");
                 var filesPaths = Directory.GetFiles(folderPath).ToList();
-                filesThatContainThisCode.AddRange(FindMatchingForSpecificFolder(filesPaths, codeItem));
+                filesThatContainThisCode = FindMatchingForSpecificFolder(filesPaths, codeItem);
+
+                // folder contains files that contains the robot code!
+                if (filesThatContainThisCode.Count > 0)
+                    return filesThatContainThisCode;
+
                 index++;
             }
 
