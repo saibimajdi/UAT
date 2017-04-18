@@ -4,7 +4,6 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using Excel = Microsoft.Office.Interop.Excel;
 
 namespace UAT
 {
@@ -99,7 +98,7 @@ namespace UAT
                     Console.WriteLine(str);
                 Console.ResetColor();
             }
-
+            Console.WriteLine("Please press any key to continue..");
             Console.ReadKey();
         }
 
@@ -205,45 +204,7 @@ namespace UAT
         }
 
         #region Excel Helpers
-        static List<CodeRobotItem> GetRobotCodesFromXlsx(string filePath)
-        {
-            Console.WriteLine("Reading data from RobotCodes (.xlsx) file...");
-
-            List<CodeRobotItem> codes = new List<CodeRobotItem>();
-
-            Excel.Application xlApp = new Excel.Application();
-
-            Excel.Workbook xlWorkbook = xlApp.Workbooks.Open(filePath);
-
-            Excel._Worksheet xlWorksheet = xlWorkbook.Sheets[1];
-
-            Excel.Range xlRange = xlWorksheet.UsedRange;
-
-            for (int index = 1; index <= xlRange.Rows.Count; index++)
-            {
-                //Console.WriteLine($"[{index}] :{xlRange.Cells[index, 1].Value2.ToString()}");
-                codes.Add(new CodeRobotItem(xlRange.Cells[index, 1].Value2.ToString(),
-                                            xlRange.Cells[index, 2].Value2.ToString(),
-                                            xlRange.Cells[index, 3].Value2.ToString()));
-            }
-
-            GC.Collect();
-            GC.WaitForPendingFinalizers();
-
-            System.Runtime.InteropServices.Marshal.ReleaseComObject(xlRange);
-            System.Runtime.InteropServices.Marshal.ReleaseComObject(xlWorksheet);
-
-            xlWorkbook.Close();
-            System.Runtime.InteropServices.Marshal.ReleaseComObject(xlWorkbook);
-
-            xlApp.Quit();
-
-            System.Runtime.InteropServices.Marshal.ReleaseComObject(xlApp);
-
-            Console.WriteLine("Reading data from RobotCodes (.xlsx) file... [Completed]");
-
-            return codes;
-        }
+       
         static List<CodeRobotItem> GetRobotCodesFromCSV(string filePath)
         {
             List<CodeRobotItem> codes = new List<CodeRobotItem>();
