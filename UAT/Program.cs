@@ -111,8 +111,11 @@ namespace UAT
 
             for (int index = 0; index < lines.Length; ++index)
             {
-                if(lines[index].StartsWith("BGM+220+"))
+                if((lines[index].StartsWith("BGM+220+"))&& (lines[index].IndexOf("9")>0))
+                {
                     lines[index] = lines[index].Replace("BGM+220+", "BGM+220+UAT_");
+
+                }
             }
 
             // write lines on the file
