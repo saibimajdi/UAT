@@ -35,6 +35,9 @@ namespace UAT
             // summary container
             List<string> summary = new List<string>();
 
+            // temp code items list
+            List<CodeRobotItem> _codeItemList = new List<CodeRobotItem>();
+
             // for each robot code, generate the specific files
             foreach (var codeItem in CodeRobotItems)
             {
@@ -58,6 +61,8 @@ namespace UAT
                 // new file name
                 var generatedFileName = $"{codeItem.CodeRobot}_{codeItem.NumSapClient}_.EDI";
 
+
+
                 // copy the first file to the destination folder
                 if (filesThatContainThisCode != null && filesThatContainThisCode.Count > 0)
                 {
@@ -70,16 +75,43 @@ namespace UAT
                     File.Copy(filesThatContainThisCode.FirstOrDefault(), $"{DestinationFolderPath}\\{generatedFileName}");
 
                     // get edited BGMs
-                    string oldBGM = string.Join(";", EditFileBGM($"{DestinationFolderPath}\\{generatedFileName}"));
+                    var listOldBGM = EditFileBGM($"{DestinationFolderPath}\\{generatedFileName}");
 
-                    // log to file
-                    codeItem.Log.Add($"{filesThatContainThisCode.FirstOrDefault()};{oldBGM}");
+                    if(listOldBGM != null && listOldBGM.Count > 0)
+                    {
+                        // log to file
+                        foreach (var bgm in listOldBGM)
+                        {
+                            //codeItem.Log.Add($"{filesThatContainThisCode.FirstOrDefault()};{oldBGM}");
+                            var _codeItem = new CodeRobotItem(codeRobot: codeItem.CodeRobot,
+                                                           numSapClient: codeItem.NumSapClient, 
+                                                                  canal: codeItem.Canal, 
+                                                                 source: $"{filesThatContainThisCode.FirstOrDefault()}", 
+                                                               commande: GetCommandeFromBGM(bgm), 
+                                                           creationDate: File.GetCreationTime($"{filesThatContainThisCode.FirstOrDefault()}").ToShortDateString());
+
+                            //_codeItem.Log.Add($"{filesThatContainThisCode.FirstOrDefault()};{bgm}");
+
+                            _codeItemList.Add(_codeItem);
+                        }
+                    }
+                    else
+                    {
+                        var _codeItem = new CodeRobotItem(codeRobot: codeItem.CodeRobot,
+                                                       numSapClient: codeItem.NumSapClient,
+                                                              canal: codeItem.Canal,
+                                                             source: $"{filesThatContainThisCode.FirstOrDefault()}",
+                                                           commande: "NULL",
+                                                       creationDate: File.GetCreationTime($"{filesThatContainThisCode.FirstOrDefault()}").ToShortDateString());
+
+                        _codeItemList.Add(_codeItem);
+                    }
                 }
-                else
-                {
-                    // log to file
-                    codeItem.Log.Add($"NULL;");
-                }
+                //else
+                //{
+                //    // log to file
+                //    codeItem.Log.Add($"NULL;");
+                //}
             }
 
             // check if the output file does exit
@@ -87,7 +119,7 @@ namespace UAT
                 File.Create($"{DestinationFolderPath}\\output.csv").Close();
 
             // create the output file
-            WriteRobotCodesToCSV(CodeRobotItems, $"{DestinationFolderPath}\\output.csv");
+            WriteRobotCodesToCSV(_codeItemList, $"{DestinationFolderPath}\\output.csv");
 
 
             // display summary
@@ -101,6 +133,21 @@ namespace UAT
             }
             Console.WriteLine("Please press any key to continue..");
             Console.ReadKey();
+        }
+
+        private static string GetCommandeFromBGM(string bgm)
+        {
+            string commande = "";
+            if(bgm.StartsWith("BGM+220+")) // BGM+220+
+            {
+                commande = bgm.Substring("BGM+220+".Length, bgm.Substring("BGM+220+".Length, (bgm.Length - "BGM+220+".Length)).IndexOf("+"));
+            }
+            else // BGM+220+
+            {
+                commande = bgm.Substring("BGM+105+".Length, bgm.Substring("BGM+105+".Length, (bgm.Length - "BGM+220+".Length)).IndexOf("+"));
+            }
+
+            return $"UAT_{commande}";
         }
 
         private static List<string> EditFileBGM(string path)
@@ -262,7 +309,7 @@ namespace UAT
                         var line = streamReader.ReadLine();
                         var values = line.Split(';');
 
-                        codes.Add(new CodeRobotItem(values[0], values[1], values[2]));
+                        codes.Add(new CodeRobotItem(values[0], values[1], values[2], "", "", ""));
                     }
                 }
             }
@@ -276,13 +323,11 @@ namespace UAT
             {
                 using (var writer = new StreamWriter(fileStream))
                 {
-                    writer.WriteLine("code_robot; num_sap_client; canal; source");
+                    writer.WriteLine("code_robot; num_sap_client; canal; source; commande; date fichier");
 
                     foreach(var code in codes)
                     {
-                        var log = string.Join(":::", code.Log.ToArray());
-
-                        var line = $"{code.CodeRobot};{code.NumSapClient};{code.Canal};{log}";
+                        var line = $"{code.CodeRobot}; {code.NumSapClient}; {code.Canal}; {code.Source}; {code.Commande}; {code.CreationDate}";
 
                         writer.WriteLine(line);
                     }
@@ -301,19 +346,20 @@ namespace UAT
         public string CodeRobot { get; set; }
         public string NumSapClient { get; set; }
         public string Canal { get; set; }
-        public List<string> Log { get; set; } 
+        public string Source { get; set; } 
+        public string Commande { get; set; }
+        public string CreationDate { get; set; }
         
-        public CodeRobotItem()
-        {
-            Log = new List<string>(); 
-        }
+        public CodeRobotItem(){}
 
-        public CodeRobotItem(string codeRobot, string numSapClient, string canal)
+        public CodeRobotItem(string codeRobot, string numSapClient, string canal, string source, string commande, string creationDate)
         {
             CodeRobot = codeRobot;
             NumSapClient = numSapClient;
             Canal = canal;
-            Log = new List<string>();
+            Source = source;
+            Commande = commande;
+            CreationDate = creationDate;
         }
     }
 }
