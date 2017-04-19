@@ -69,10 +69,11 @@ namespace UAT
 
                     File.Copy(filesThatContainThisCode.FirstOrDefault(), $"{DestinationFolderPath}/{generatedFileName}");
 
-                    EditFileBGM($"{DestinationFolderPath}/{generatedFileName}");
+                    // get edited BGMs
+                    string oldBGM = string.Join(";", EditFileBGM($"{DestinationFolderPath}/{generatedFileName}"));
 
                     // log to file
-                    codeItem.Log.Add($"[SOURCE]={filesThatContainThisCode.FirstOrDefault()};[DESTINATION]={DestinationFolderPath}/{generatedFileName}");
+                    codeItem.Log.Add($"[SOURCE]={filesThatContainThisCode.FirstOrDefault()};[DESTINATION]={DestinationFolderPath}/{generatedFileName};{oldBGM}");
                 }
                 else
                 {
@@ -212,18 +213,42 @@ namespace UAT
             return filesThatContainThisCode;
         }
 
+        //private static bool FileContainsRobotCode(string filePath, CodeRobotItem codeItem)
+        //{
+        //    var code = $"EDI+{codeItem.CodeRobot}:EDI";
+        //    var fileContent = File.ReadAllText(filePath);
+        //    if (fileContent.Contains(code))
+        //        return true;
+
+        //    return false;
+        //}
+
+        // to be verified
         private static bool FileContainsRobotCode(string filePath, CodeRobotItem codeItem)
         {
-            var code = $"EDI+{codeItem.CodeRobot}:EDI";
-            var fileContent = File.ReadAllText(filePath);
-            if (fileContent.Contains(code))
+            string fileContent = File.ReadAllText(filePath);
+
+            /*var code = $"EDI+{codeItem.CodeRobot}:EDI";
+            List<string> fileContent = File.ReadAllLines(filePath).ToList();
+            foreach (string s in fileContent)
+            {
+                if (((s.IndexOf("UNB+UNOA:")) > 0) && (s.IndexOf(":EDI") > 0))
+                {
+                    string res = s.Substring(s.IndexOf("UNB+UNOA:"), s.IndexOf(":EDI"));
+                    if (res.Contains(codeItem.CodeRobot))
+                    {
+                        return true;
+                    }
+                }
+            }*/
+            if ((fileContent.Contains("UNB+UNOA:")) && (fileContent.Contains(codeItem.CodeRobot)))
                 return true;
 
             return false;
         }
 
         #region Excel Helpers
-       
+
         static List<CodeRobotItem> GetRobotCodesFromCSV(string filePath)
         {
             List<CodeRobotItem> codes = new List<CodeRobotItem>();
