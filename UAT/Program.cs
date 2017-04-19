@@ -18,6 +18,12 @@ namespace UAT
         // get destination folder path from APP SETTING
         public static string DestinationFolderPath = System.Configuration.ConfigurationManager.AppSettings["PATHDEST"].ToString();
 
+        // start date
+        public static readonly DateTime StartDate = DateTime.Parse(System.Configuration.ConfigurationManager.AppSettings["START_DATE"].ToString());
+
+        // end date
+        public static readonly DateTime EndDate = DateTime.Parse(System.Configuration.ConfigurationManager.AppSettings["END_DATE"].ToString());
+
         static void Main(string[] args)
         {
             // get source folders path from APP SETTING file
@@ -192,8 +198,6 @@ namespace UAT
             return oldBGM;
         }
 
-        // closing issue #1
-
         private static List<string> FindMatching(List<string> sourceFoldersPath, CodeRobotItem codeItem)
         {
             if (sourceFoldersPath == null)
@@ -234,8 +238,10 @@ namespace UAT
 
             foreach (var filePath in filesPaths)
             {
-                // console log
-                //Console.Write($"Checking file [{index}] ==> ");
+                // check creation date 
+                var creationDate = File.GetCreationTime(filePath);
+                if (creationDate > EndDate || creationDate < StartDate)
+                    break;
 
                 // check if this file contain any robot_code
                 if (FileContainsRobotCode(filePath, codeItem))
