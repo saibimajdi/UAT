@@ -65,23 +65,26 @@ namespace UAT
                     );
 
                 // new file name
-                var generatedFileName = $"{codeItem.CodeRobot}_{codeItem.NumSapClient}_.EDI";
+                //var generatedFileName = $"{codeItem.CodeRobot}_{codeItem.NumSapClient}_.EDI";
 
 
 
                 // copy the first file to the destination folder
                 if (filesThatContainThisCode != null && filesThatContainThisCode.Count > 0)
                 {
+                    // new file name
+                    var filename = Path.GetFileName(filesThatContainThisCode.FirstOrDefault());
+
                     summary.Add($"{filesThatContainThisCode.Count} file(s) contains the {codeItem.CodeRobot}!");
                     
                     // delete the file if exist
-                    if (File.Exists($"{DestinationFolderPath}\\{generatedFileName}"))
-                        File.Delete($"{DestinationFolderPath}\\{generatedFileName}");
+                    if (File.Exists($"{DestinationFolderPath}\\{filename}"))
+                        File.Delete($"{DestinationFolderPath}\\{filename}");
 
-                    File.Copy(filesThatContainThisCode.FirstOrDefault(), $"{DestinationFolderPath}\\{generatedFileName}");
+                    File.Copy(filesThatContainThisCode.FirstOrDefault(), $"{DestinationFolderPath}\\{filename}");
 
                     // get edited BGMs
-                    var listOldBGM = EditFileBGM($"{DestinationFolderPath}\\{generatedFileName}");
+                    var listOldBGM = EditFileBGM($"{DestinationFolderPath}\\{filename}");
 
                     if(listOldBGM != null && listOldBGM.Count > 0)
                     {
@@ -253,13 +256,6 @@ namespace UAT
 
                     filesThatContainThisCode.Add(filePath);
                 }
-                //else
-                //{
-                //    // console log
-                //    Console.ForegroundColor = ConsoleColor.Red;
-                //    Console.WriteLine("[NO]");
-                //    Console.ResetColor();
-                //}
                 index++;
             }
 
