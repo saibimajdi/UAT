@@ -64,30 +64,30 @@ namespace UAT
                     summary.Add($"{filesThatContainThisCode.Count} file(s) contains the {codeItem.CodeRobot}!");
                     
                     // delete the file if exist
-                    if (File.Exists($"{DestinationFolderPath}/{generatedFileName}"))
-                        File.Delete($"{DestinationFolderPath}/{generatedFileName}");
+                    if (File.Exists($"{DestinationFolderPath}\\{generatedFileName}"))
+                        File.Delete($"{DestinationFolderPath}\\{generatedFileName}");
 
-                    File.Copy(filesThatContainThisCode.FirstOrDefault(), $"{DestinationFolderPath}/{generatedFileName}");
+                    File.Copy(filesThatContainThisCode.FirstOrDefault(), $"{DestinationFolderPath}\\{generatedFileName}");
 
                     // get edited BGMs
-                    string oldBGM = string.Join(";", EditFileBGM($"{DestinationFolderPath}/{generatedFileName}"));
+                    string oldBGM = string.Join(";", EditFileBGM($"{DestinationFolderPath}\\{generatedFileName}"));
 
                     // log to file
-                    codeItem.Log.Add($"[SOURCE]={filesThatContainThisCode.FirstOrDefault()};[DESTINATION]={DestinationFolderPath}/{generatedFileName};{oldBGM}");
+                    codeItem.Log.Add($"{filesThatContainThisCode.FirstOrDefault()};{oldBGM}");
                 }
                 else
                 {
                     // log to file
-                    codeItem.Log.Add($"[SOURCE]=NULL;[DESTINATION]=NULL");
+                    codeItem.Log.Add($"NULL;");
                 }
             }
 
             // check if the output file does exit
-            if(!File.Exists($"{DestinationFolderPath}/output.csv"))
-                File.Create($"{DestinationFolderPath}/output.csv").Close();
+            if(!File.Exists($"{DestinationFolderPath}\\output.csv"))
+                File.Create($"{DestinationFolderPath}\\output.csv").Close();
 
             // create the output file
-            WriteRobotCodesToCSV(CodeRobotItems, $"{DestinationFolderPath}/output.csv");
+            WriteRobotCodesToCSV(CodeRobotItems, $"{DestinationFolderPath}\\output.csv");
 
 
             // display summary
@@ -276,7 +276,7 @@ namespace UAT
             {
                 using (var writer = new StreamWriter(fileStream))
                 {
-                    writer.WriteLine("code_robot; num_sap_client; canal; log");
+                    writer.WriteLine("code_robot; num_sap_client; canal; source");
 
                     foreach(var code in codes)
                     {
