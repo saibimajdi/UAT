@@ -102,19 +102,31 @@ namespace UAT
             Console.ReadKey();
         }
 
-        private static void EditFileBGM(string path)
+        private static List<string> EditFileBGM(string path)
         {
             if (string.IsNullOrWhiteSpace(path) || string.IsNullOrEmpty(path))
-                return;
+                return null;
 
             string[] lines = File.ReadAllLines(path);
 
+            List<string> oldBGM = new List<string>();
+
             for (int index = 0; index < lines.Length; ++index)
             {
-                if((lines[index].StartsWith("BGM+220+"))&& (lines[index].IndexOf("9")>0))
+                if ((lines[index].StartsWith("BGM+220+")) && (lines[index].IndexOf("9") > 0))
                 {
-                    lines[index] = lines[index].Replace("BGM+220+", "BGM+220+UAT_");
+                    // saving old BGMs
+                    oldBGM.Add(lines[index]);
 
+                    lines[index] = lines[index].Replace("BGM+220+", "BGM+220+UAT_");
+                }
+                else
+                {
+                    if (lines[index].StartsWith("BGM+105+"))
+                    {
+                        oldBGM.Add(lines[index]);
+                        lines[index] = lines[index].Replace("BGM+105+", "BGM+105+UAT_");
+                    }
                 }
             }
 
@@ -128,6 +140,8 @@ namespace UAT
 
                 writer.Close();
             }
+
+            return oldBGM;
         }
 
         // closing issue #1
