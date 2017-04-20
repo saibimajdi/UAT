@@ -240,11 +240,14 @@ namespace UAT
             List<string> filesThatContainThisCode = new List<string>();
 
             foreach (var filePath in filesPaths)
-            {
+           {
                 // check creation date 
-                var creationDate = File.GetCreationTime(filePath);
-                if (creationDate > EndDate || creationDate < StartDate)
-                    break;
+                /* var creationDate = File.GetLastWriteTime(filePath);
+                 int result1 = DateTime.Compare(creationDate, StartDate);
+                 int result2 = DateTime.Compare(creationDate, EndDate.AddHours(24));
+
+                 if ((result1 < 1) || (result2>0))
+                     break;*/
 
                 // check if this file contain any robot_code
                 if (FileContainsRobotCode(filePath, codeItem))
@@ -290,7 +293,9 @@ namespace UAT
                     }
                 }
             }*/
-            if ((fileContent.Contains("UNB+UNOA:")) && (fileContent.Contains(codeItem.CodeRobot)))
+            var code1 = $"UNB+UNOA:1+{codeItem.CodeRobot}:";
+            var code2 = $"UNB+UNOA:3+{codeItem.CodeRobot}:";
+            if ((fileContent.Contains(code1)) || (fileContent.Contains(code2)))
                 return true;
 
             return false;
@@ -329,7 +334,7 @@ namespace UAT
 
                     foreach(var code in codes)
                     {
-                        var line = $"{code.CodeRobot}; {code.NumSapClient}; {code.Canal}; {code.Source}; {code.Commande}; {code.CreationDate}";
+                        var line = $"{code.CodeRobot}; {code.NumSapClient}; {code.Canal}; {code.Source} ; {code.Commande}; {code.CreationDate}";
 
                         writer.WriteLine(line);
                     }
